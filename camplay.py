@@ -10,7 +10,7 @@ from tkinter import simpledialog
 from PIL import Image, ImageTk
 
 # global constants and varibles
-record_folder = "./camplay"  # Predefined folder for recording
+record_folder = "."  # Predefined folder for recording
 initial_fps = None  # recording fps, if None then as is from the camera
 codec_str = 'mp4v' # H264 mp4v
 video_fourcc = cv2.VideoWriter_fourcc(*codec_str)  # Use 'mp4v' for MP4 format
@@ -158,7 +158,7 @@ class CamPlay:
 
     def init_params(self, resolutions=None, initial_res=None):
         # more or less static constants and varibles
-        self.record_folder = "/media/val/DATA_SSD/tmp/test_cam"  # Predefined folder for recording
+        self.record_folder = "."  # Predefined folder for recording
         self.initial_fps = None  # recording fps, if None then as is from the camera
         self.codec_str = 'mp4v' # H264 mp4v
         self.video_fourcc = cv2.VideoWriter_fourcc(*codec_str)  # Use 'mp4v' for MP4 format
