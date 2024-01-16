@@ -10,7 +10,7 @@ from tkinter import simpledialog
 from PIL import Image, ImageTk
 
 # global constants and varibles
-record_folder = "."  # Predefined folder for recording
+record_folder = "./camplay"  # Predefined folder for recording
 initial_fps = None  # recording fps, if None then as is from the camera
 codec_str = 'mp4v' # H264 mp4v
 video_fourcc = cv2.VideoWriter_fourcc(*codec_str)  # Use 'mp4v' for MP4 format
@@ -143,7 +143,7 @@ class RecorderCV2:
 # as UI it has it's own events loop. keep this in mind
 class CamPlay:
     def __init__(self, cam_id=0, cam=None, resolutions=None, initial_res=None):
-        global  draw_green_cross, draw_red_cross
+        global  draw_green_cross, draw_red_cross, record_folder
         # basic init
         self.cam = cam
         self.camera_index = cam_id
@@ -158,7 +158,7 @@ class CamPlay:
 
     def init_params(self, resolutions=None, initial_res=None):
         # more or less static constants and varibles
-        self.record_folder = "."  # Predefined folder for recording
+        self.record_folder = record_folder  # Predefined folder for recording
         self.initial_fps = None  # recording fps, if None then as is from the camera
         self.codec_str = 'mp4v' # H264 mp4v
         self.video_fourcc = cv2.VideoWriter_fourcc(*codec_str)  # Use 'mp4v' for MP4 format
@@ -196,8 +196,12 @@ class CamPlay:
         self.current_resolution = None  # Variable to store the current resolution
 
         # Ensure the recording folder exists
-        if not os.path.exists(self.record_folder):
-            os.makedirs(self.record_folder)
+        try:
+            if not os.path.exists(self.record_folder):
+                os.makedirs(self.record_folder)
+        except Exception as e:
+            print("creating folder exception: ", str(e))
+        
         
     def init_camera(self):
         # Initialize the camera to default webcam
@@ -289,6 +293,7 @@ class CamPlay:
         self.btn_record = tk.Button(self.button_frame, text="Start", command=self.toggle_recording)
         self.btn_record.pack(fill=tk.X, pady=(0, 20))
         self.btn_record.config(text="Start", fg="red")
+        self.btn_record.config(state='disabled')  # disabling for now, doesn't always work. :\
 
         self.btn_quit = tk.Button(self.button_frame, text="Quit", command=self.quit_application)
         self.btn_quit.pack(side=tk.BOTTOM, fill=tk.X, pady=(15, 0))
@@ -346,7 +351,7 @@ class CamPlay:
                         try:
                             self.frame = cv2.resize(cropped_frame, (int(width), int(height)))                    
                         except Exception as e:
-                            print("zdd exception: ", str(e), "shape:", cropped_frame.shape, " ", width, "x", height)
+                            print("resize exception: ", str(e), "shape:", cropped_frame.shape, " ", width, "x", height)
                             #print(self.zoom_factor, "::", int(self.offset_y), int(self.offset_y + height/self.zoom_factor),
                             #                int(self.offset_x), int(self.offset_x + width/self.zoom_factor))
                     
@@ -435,14 +440,19 @@ class CamPlay:
         self.recording = not self.recording
         if self.recording:
             # Start recording
-            now = datetime.now()
-            filename = now.strftime("video_%Y-%m-%d_%H%M%S") + f".{self.video_ext}"
-            filepath = os.path.join(self.record_folder, filename)
-            fps = self.cam.GetFPS() if not self.initial_fps else self.initial_fps
-            
-            height, width, _ = self.frame_shape
-            self.video_writer = cv2.VideoWriter(filepath, self.video_fourcc, fps, (width, height))
-            self.btn_record.config(text="Stop", fg="red")
+            try:
+                now = datetime.now()
+                filename = now.strftime("video_%Y-%m-%d_%H%M%S") + f".{self.video_ext}"
+                filepath = os.path.join(self.record_folder, filename)
+                fps = self.cam.GetFPS() if not self.initial_fps else self.initial_fps
+                
+                height, width, _ = self.frame_shape
+                self.video_writer = cv2.VideoWriter(filepath, self.video_fourcc, fps, (width, height))
+                self.btn_record.config(text="Stop", fg="red")
+                print("recording into file: ", filepath)
+            except Exception as e:
+                print("creating video file exception: ", str(e), ", file name: ", filepath)
+                self.btn_record.config(state='disabled') 
         else:
             # Stop recording
             self.video_writer.release()
